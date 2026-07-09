@@ -91,7 +91,9 @@ run: $(BUILD)
 #---------------------------------------------------------------------------------
 # host-compiled unit tests (pure-C modules only; bodies added as modules land)
 test:
-	@echo "no host tests yet"
+	@mkdir -p $(BUILD)
+	gcc -std=c99 -Wall -Wextra -Iinclude tests/test_iso.c source/iso.c -o $(BUILD)/test_iso
+	@$(BUILD)/test_iso
 
 #---------------------------------------------------------------------------------
 else
