@@ -108,6 +108,23 @@ static void test_ai_tracks_ball(void)
 	assert(d <= AI_DEADZONE + AI_SPEED);
 }
 
+static void test_clamped_paddle_gives_no_spin(void)
+{
+	Game g; game_init(&g); game_serve(&g);
+	/* pin player paddle at bottom clamp */
+	g.ball.x = COURT_W / 2; g.ball.vx = 0; g.ball.vy = 0;
+	for(int i = 0; i < 200; i++) game_step(&g, 1);
+	assert(g.pads[0].y == COURT_D - PAD_HALF);
+	/* paddle pinned: one more push must record zero actual movement */
+	game_step(&g, 1);
+	assert(g.pads[0].vy == 0);
+	/* ball hits pinned paddle while input held: no spin transfer */
+	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
+	g.ball.y = g.pads[0].y; g.ball.vy = 0;
+	game_step(&g, 1);
+	assert(g.ball.vy == 0);
+}
+
 int main(void)
 {
 	test_init();
@@ -119,6 +136,7 @@ int main(void)
 	test_win_at_five();
 	test_player_paddle_moves_and_clamps();
 	test_ai_tracks_ball();
+	test_clamped_paddle_gives_no_spin();
 	puts("test_game OK");
 	return 0;
 }

@@ -1,10 +1,13 @@
 #include "iso.h"
 #include "game.h"
 
-static void clamp_pad(Paddle *p)
+static void move_pad(Paddle *p, int vy)
 {
+	int y0 = p->y;
+	p->y += vy;
 	if(p->y < PAD_HALF)           p->y = PAD_HALF;
 	if(p->y > COURT_D - PAD_HALF) p->y = COURT_D - PAD_HALF;
+	p->vy = p->y - y0;	/* actual movement, so spin transfer is honest */
 }
 
 void game_init(Game *g)
@@ -54,9 +57,7 @@ int game_step(Game *g, int dir)
 	Ball *b = &g->ball;
 
 	/* player paddle */
-	g->pads[0].vy = dir * PAD_SPEED;
-	g->pads[0].y += g->pads[0].vy;
-	clamp_pad(&g->pads[0]);
+	move_pad(&g->pads[0], dir * PAD_SPEED);
 
 	/* cpu paddle: track ball y, capped speed, dead zone (beatable) */
 	{
@@ -64,9 +65,7 @@ int game_step(Game *g, int dir)
 		int v = 0;
 		if(d >  AI_DEADZONE) v =  AI_SPEED;
 		if(d < -AI_DEADZONE) v = -AI_SPEED;
-		g->pads[1].vy = v;
-		g->pads[1].y += v;
-		clamp_pad(&g->pads[1]);
+		move_pad(&g->pads[1], v);
 	}
 
 	/* ball: gravity, integrate, bounce floor and side walls */
