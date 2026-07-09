@@ -14,5 +14,5 @@ Requires devkitARM + libtonc (devkitPro), optionally mGBA.
 
 ## Controls
 
-- D-pad Up/Down: move paddle along the court depth axis
+- D-pad Left/Right: move paddle along the court depth axis
 - Start: start game / pause / restart after win

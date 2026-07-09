@@ -54,11 +54,22 @@ static void test_paddle_hit_reflects_and_kicks(void)
 	assert(g.ball.vz == KICK_VZ);		/* arcs up again */
 }
 
+static void test_paddle_hit_has_forgiving_margin(void)
+{
+	Game g; game_init(&g); game_serve(&g);
+	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
+	g.ball.y = g.pads[0].y + PAD_HALF + BALL_R + PAD_HIT_MARGIN - FX(1);
+	g.ball.vy = 0;
+	int ev = game_step(&g, 0);
+	assert(ev == GEV_NONE);
+	assert(g.ball.vx < 0);
+}
+
 static void test_miss_scores_for_other_side(void)
 {
 	Game g; game_init(&g); game_serve(&g);
 	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
-	g.ball.y = g.pads[0].y + PAD_HALF + BALL_R + FX(2);
+	g.ball.y = g.pads[0].y + PAD_HALF + BALL_R + PAD_HIT_MARGIN + FX(2);
 	g.ball.vy = 0;
 	int ev = game_step(&g, 0);
 	assert(ev == GEV_POINT);
@@ -72,7 +83,7 @@ static void test_win_at_five(void)
 	Game g; game_init(&g); game_serve(&g);
 	g.score[1] = WIN_SCORE - 1;
 	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
-	g.ball.y = g.pads[0].y + PAD_HALF + BALL_R + FX(2);
+	g.ball.y = g.pads[0].y + PAD_HALF + BALL_R + PAD_HIT_MARGIN + FX(2);
 	g.ball.vy = 0;
 	int ev = game_step(&g, 0);
 	assert(ev == GEV_WIN);
@@ -132,6 +143,7 @@ int main(void)
 	test_floor_bounce();
 	test_wall_bounce();
 	test_paddle_hit_reflects_and_kicks();
+	test_paddle_hit_has_forgiving_margin();
 	test_miss_scores_for_other_side();
 	test_win_at_five();
 	test_player_paddle_moves_and_clamps();

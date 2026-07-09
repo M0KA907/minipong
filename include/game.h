@@ -8,6 +8,7 @@
 #define COURT_D		FX(80)
 #define PAD_HALF	FX(12)
 #define BALL_R		FX(3)
+#define PAD_HIT_MARGIN	FX(8)
 
 /* tuning (all .8 fixed, per frame) */
 #define PAD_SPEED	FX(2)

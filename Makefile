@@ -13,7 +13,7 @@ include $(DEVKITARM)/gba_rules
 	$(OBJCOPY) -O binary $< $@
 	@echo built ... $(notdir $@)
 	@if command -v gbafix >/dev/null 2>&1; then \
-		gbafix $@ -t$(GAME_TITLE) -c$(GAME_CODE) -m$(MAKER_CODE); \
+		gbafix $@ -p -t$(GAME_TITLE) -c$(GAME_CODE) -m$(MAKER_CODE); \
 	fi
 
 #---------------------------------------------------------------------------------

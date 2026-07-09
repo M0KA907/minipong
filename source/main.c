@@ -38,8 +38,8 @@ int main(void)
 				st = ST_PAUSE;
 				break;
 			}
-			int dir = (key_held(KEY_DOWN) ? 1 : 0)
-				- (key_held(KEY_UP) ? 1 : 0);
+			int dir = (key_held(KEY_LEFT) ? 1 : 0)
+				- (key_held(KEY_RIGHT) ? 1 : 0);
 			int ev = game_step(&g, dir);
 			render_game(&g);
 			if(ev == GEV_POINT){

@@ -79,7 +79,7 @@ int game_step(Game *g, int dir)
 	if(b->vx > 0 && b->x >= COURT_W){
 		int off = b->y - g->pads[0].y;
 		if(off < 0) off = -off;
-		if(off <= PAD_HALF + BALL_R){
+		if(off <= PAD_HALF + BALL_R + PAD_HIT_MARGIN){
 			b->x = 2*COURT_W - b->x;
 			reflect_off_pad(b, &g->pads[0]);
 		}else
@@ -90,7 +90,7 @@ int game_step(Game *g, int dir)
 	if(b->vx < 0 && b->x <= 0){
 		int off = b->y - g->pads[1].y;
 		if(off < 0) off = -off;
-		if(off <= PAD_HALF + BALL_R){
+		if(off <= PAD_HALF + BALL_R + PAD_HIT_MARGIN){
 			b->x = -b->x;
 			reflect_off_pad(b, &g->pads[1]);
 		}else
