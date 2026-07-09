@@ -1,4 +1,3 @@
-#include <string.h>
 #include <tonc.h>
 #include "iso.h"
 #include "game.h"
@@ -107,7 +106,8 @@ static void spr_px(int tid, int tw, int x, int y, u8 c)
 
 static void build_tiles(void)
 {
-	memset(&OBJ_TILES[TID_BALL], 0, 10 * sizeof(TILE));
+	/* VRAM ignores 8-bit writes; must clear with 32-bit stores */
+	memset32(&OBJ_TILES[TID_BALL], 0, 10 * sizeof(TILE) / 4);
 
 	/* ball: 8x8 shaded circle */
 	for(int y = 0; y < 8; y++)
