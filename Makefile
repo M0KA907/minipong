@@ -94,6 +94,8 @@ test:
 	@mkdir -p $(BUILD)
 	gcc -std=c99 -Wall -Wextra -Iinclude tests/test_iso.c source/iso.c -o $(BUILD)/test_iso
 	@$(BUILD)/test_iso
+	gcc -std=c99 -Wall -Wextra -Iinclude tests/test_game.c source/game.c source/iso.c -o $(BUILD)/test_game
+	@$(BUILD)/test_game
 
 #---------------------------------------------------------------------------------
 else
