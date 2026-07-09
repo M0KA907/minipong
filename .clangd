@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-Iinclude, -I/opt/devkitpro/libtonc/include, -I/opt/devkitpro/devkitARM/arm-none-eabi/include]
