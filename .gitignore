@@ -3,3 +3,5 @@ build/
 *.elf
 *.sav
 *.map
+docs/superpowers/
+.remember/
