@@ -1,6 +1,15 @@
 #include "iso.h"
 #include "game.h"
 
+const int GAME_WIN_SCORES[3] = { 5, 7, 11 };
+
+/* per-difficulty AI tuning; index = Config.difficulty */
+static const struct { int speed, deadzone; } s_ai[3] = {
+	{ 224, FX(6) },		/* easy: slow, blind spot */
+	{ 320, FX(3) },		/* normal: previous fixed tuning */
+	{ 416, FX(1) },		/* hard: fast, tight */
+};
+
 static void move_pad(Paddle *p, int vy)
 {
 	int y0 = p->y;
@@ -10,7 +19,7 @@ static void move_pad(Paddle *p, int vy)
 	p->vy = p->y - y0;	/* actual movement, so spin transfer is honest */
 }
 
-void game_init(Game *g)
+void game_init(Game *g, const Config *cfg)
 {
 	g->score[0] = 0;  g->score[1] = 0;
 	g->server = 0;    g->winner = -1;
@@ -18,6 +27,9 @@ void game_init(Game *g)
 	g->pads[1].y = COURT_D / 2;  g->pads[1].vy = 0;
 	g->ball.x = COURT_W / 2;  g->ball.y = COURT_D / 2;  g->ball.z = 0;
 	g->ball.vx = 0;  g->ball.vy = 0;  g->ball.vz = 0;
+	g->win_score = GAME_WIN_SCORES[cfg->win_score_idx];
+	g->ai_speed = s_ai[cfg->difficulty].speed;
+	g->ai_deadzone = s_ai[cfg->difficulty].deadzone;
 }
 
 void game_serve(Game *g)
@@ -36,8 +48,16 @@ static int point_for(Game *g, int side)
 	g->score[side]++;
 	g->server = side;
 	g->ball.vx = 0;  g->ball.vy = 0;  g->ball.vz = 0;
-	if(g->score[side] >= WIN_SCORE){ g->winner = side; return GEV_WIN; }
+	if(g->score[side] >= g->win_score){ g->winner = side; return GEV_WIN; }
 	return GEV_POINT;
+}
+
+int game_ai_dir(const Game *g, int side)
+{
+	int d = g->ball.y - g->pads[side].y;
+	if(d >  g->ai_deadzone) return  1;
+	if(d < -g->ai_deadzone) return -1;
+	return 0;
 }
 
 static void reflect_off_pad(Ball *b, const Paddle *p)
@@ -60,13 +80,7 @@ int game_step(Game *g, int dir)
 	move_pad(&g->pads[0], dir * PAD_SPEED);
 
 	/* cpu paddle: track ball y, capped speed, dead zone (beatable) */
-	{
-		int d = b->y - g->pads[1].y;
-		int v = 0;
-		if(d >  AI_DEADZONE) v =  AI_SPEED;
-		if(d < -AI_DEADZONE) v = -AI_SPEED;
-		move_pad(&g->pads[1], v);
-	}
+	move_pad(&g->pads[1], game_ai_dir(g, 1) * g->ai_speed);
 
 	/* ball: gravity, integrate, bounce floor and side walls */
 	b->vz -= GRAVITY;
