@@ -45,14 +45,16 @@ static void px_rect(int x0, int y0, int x1, int y1, u8 c)
 }
 
 /* ---- 3x5 font, scaled; row0 in bits 14..12 .. row4 in bits 2..0 ---- */
-static const char s_font_chars[] = "0123456789ACEGIMNOPRSTUWY ";
-static const u16 s_font[26] = {
+static const char s_font_chars[] = "0123456789ACEGIMNOPRSTUWY DFHL->";
+static const u16 s_font[32] = {
 	0x7B6F, 0x2C97, 0x73E7, 0x73CF, 0x5BC9,	/* 0-4 */
 	0x79CF, 0x79EF, 0x7252, 0x7BEF, 0x7BCF,	/* 5-9 */
 	0x2BED, 0x3923, 0x79E7, 0x396B, 0x7497,	/* A C E G I */
 	0x5FED, 0x6B6D, 0x7B6F, 0x7BE4, 0x7BF5,	/* M N O P R */
 	0x388E, 0x7492, 0x5B6F, 0x5BFD, 0x5A92,	/* S T U W Y */
-	0x0000					/* space */
+	0x0000,					/* space */
+	0x6B6E, 0x79A4, 0x5BED, 0x4927,		/* D F H L */
+	0x01C0, 0x4454				/* - > */
 };
 
 static int glyph_index(char ch)
@@ -71,6 +73,12 @@ static void draw_glyph(int x0, int y0, char ch, int scale, u8 c)
 			px_rect(x0 + col*scale, y0 + r*scale,
 				x0 + col*scale + scale - 1,
 				y0 + r*scale + scale - 1, c);
+}
+
+static void draw_text(int x, int y, const char *s, int scale, u8 c)
+{
+	for(int i = 0; s[i]; i++, x += 4*scale)
+		draw_glyph(x, y, s[i], scale, c);
 }
 
 /* ---- court: diamond with corners (80,20) (240,100) (160,140) (0,60) ---- */
@@ -210,4 +218,28 @@ void render_msg(const char *s)
 	if(x < 0) x = 0;
 	for(int i = 0; i < len; i++, x += 8)
 		draw_glyph(x, 146, s[i], 2, CLR_TEXT);
+}
+
+void render_court(void)
+{
+	draw_court();
+}
+
+void render_menu(const Config *cfg, int row)
+{
+	static const char *const diff[3]  = { "EASY", "NORMAL", "HARD" };
+	static const char *const score[3] = { "5", "7", "11" };
+	static const char *const ctrl[2]  = { "L-R", "U-D" };
+
+	draw_court();
+	px_rect(32, 20, 207, 122, CLR_BG);	/* panel so text reads over floor */
+	draw_text(88, 26, "MINIPONG", 2, CLR_TEXT);
+	draw_text(48,  56, "DIFFICULTY", 2, CLR_TEXT);
+	draw_text(48,  72, "WIN SCORE", 2, CLR_TEXT);
+	draw_text(48,  88, "CONTROLS", 2, CLR_TEXT);
+	draw_text(48, 104, "START GAME", 2, CLR_TEXT);
+	draw_text(140, 56, diff[cfg->difficulty], 2, CLR_TEXT);
+	draw_text(140, 72, score[cfg->win_score_idx], 2, CLR_TEXT);
+	draw_text(140, 88, ctrl[cfg->controls], 2, CLR_TEXT);
+	draw_glyph(38, 56 + row*16, '>', 2, CLR_TEXT);
 }
