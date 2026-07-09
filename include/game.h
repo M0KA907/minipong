@@ -12,6 +12,7 @@
 
 /* tuning (all .8 fixed, per frame) */
 #define PAD_SPEED	FX(2)
+#define PAD_BOOST_SPEED	(PAD_SPEED * 3 / 2)	/* A/B held: 1.5x */
 #define GRAVITY		10
 #define SERVE_VX	320
 #define SERVE_VY	150
@@ -22,13 +23,20 @@
 #define MAX_VX		640
 #define MAX_VY		512
 
-enum { GEV_NONE, GEV_POINT, GEV_WIN };
+enum {
+	GEV_NONE,
+	GEV_POINT,
+	GEV_WIN,
+	GEV_HIT_PLAYER,
+	GEV_HIT_CPU,
+	GEV_FLOOR_BOUNCE,
+	GEV_WALL_BOUNCE
+};
 
 /* settings chosen in the menu; copied into Game at init (match-immutable) */
 typedef struct {
 	int difficulty;		/* 0 easy, 1 normal, 2 hard */
 	int win_score_idx;	/* index into GAME_WIN_SCORES */
-	int controls;		/* 0 = L-R, 1 = U-D (read by main.c only) */
 } Config;
 
 extern const int GAME_WIN_SCORES[3];	/* {5, 7, 11} */
@@ -51,7 +59,7 @@ void game_init(Game *g, const Config *cfg);
 void game_serve(Game *g);
 /* -1/0/+1 for pads[side] to track ball y (dead zone applied) */
 int game_ai_dir(const Game *g, int side);
-/* dir: -1/0/+1 player paddle along y; returns GEV_* */
-int game_step(Game *g, int dir);
+/* dir: -1/0/+1 player paddle along y; boost: nonzero = 1.5x speed; returns GEV_* */
+int game_step(Game *g, int dir, int boost);
 
 #endif

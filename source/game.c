@@ -72,22 +72,23 @@ static void reflect_off_pad(Ball *b, const Paddle *p)
 	b->vz = KICK_VZ;
 }
 
-int game_step(Game *g, int dir)
+int game_step(Game *g, int dir, int boost)
 {
 	Ball *b = &g->ball;
 
 	/* player paddle */
-	move_pad(&g->pads[0], dir * PAD_SPEED);
+	move_pad(&g->pads[0], dir * (boost ? PAD_BOOST_SPEED : PAD_SPEED));
 
 	/* cpu paddle: track ball y, capped speed, dead zone (beatable) */
 	move_pad(&g->pads[1], game_ai_dir(g, 1) * g->ai_speed);
 
 	/* ball: gravity, integrate, bounce floor and side walls */
+	int ev = GEV_NONE;
 	b->vz -= GRAVITY;
 	b->x += b->vx;  b->y += b->vy;  b->z += b->vz;
-	if(b->z < 0)      { b->z = -b->z;              b->vz = -b->vz; }
-	if(b->y < 0)      { b->y = -b->y;              b->vy = -b->vy; }
-	if(b->y > COURT_D){ b->y = 2*COURT_D - b->y;   b->vy = -b->vy; }
+	if(b->z < 0)      { b->z = -b->z;              b->vz = -b->vz; ev = GEV_FLOOR_BOUNCE; }
+	if(b->y < 0)      { b->y = -b->y;              b->vy = -b->vy; ev = GEV_WALL_BOUNCE; }
+	if(b->y > COURT_D){ b->y = 2*COURT_D - b->y;   b->vy = -b->vy; ev = GEV_WALL_BOUNCE; }
 
 	/* player plane (x = COURT_W) */
 	if(b->vx > 0 && b->x >= COURT_W){
@@ -96,6 +97,7 @@ int game_step(Game *g, int dir)
 		if(off <= PAD_HALF + BALL_R + PAD_HIT_MARGIN){
 			b->x = 2*COURT_W - b->x;
 			reflect_off_pad(b, &g->pads[0]);
+			return GEV_HIT_PLAYER;
 		}else
 			return point_for(g, 1);
 	}
@@ -107,9 +109,10 @@ int game_step(Game *g, int dir)
 		if(off <= PAD_HALF + BALL_R + PAD_HIT_MARGIN){
 			b->x = -b->x;
 			reflect_off_pad(b, &g->pads[1]);
+			return GEV_HIT_CPU;
 		}else
 			return point_for(g, 0);
 	}
 
-	return GEV_NONE;
+	return ev;
 }

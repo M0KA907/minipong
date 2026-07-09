@@ -3,7 +3,7 @@
 
 #include "game.h"
 
-enum { MROW_DIFF, MROW_SCORE, MROW_CTRL, MROW_START, MROW_COUNT };
+enum { MROW_DIFF, MROW_SCORE, MROW_START, MROW_COUNT };
 
 typedef struct {
 	Config cfg;	/* persists across matches (RAM only) */

@@ -3,7 +3,7 @@
 #include "iso.h"
 #include "game.h"
 
-static const Config CFG_NORMAL = { 1, 0, 0 };	/* normal, to 5, L-R */
+static const Config CFG_NORMAL = { 1, 0 };	/* normal, to 5 */
 
 static void test_init(void)
 {
@@ -27,7 +27,8 @@ static void test_floor_bounce(void)
 {
 	Game g; game_init(&g, &CFG_NORMAL); game_serve(&g);
 	g.ball.z = FX(1); g.ball.vz = -FX(2);
-	game_step(&g, 0);
+	int ev = game_step(&g, 0, 0);
+	assert(ev == GEV_FLOOR_BOUNCE);
 	assert(g.ball.z >= 0);
 	assert(g.ball.vz > 0);
 }
@@ -36,10 +37,12 @@ static void test_wall_bounce(void)
 {
 	Game g; game_init(&g, &CFG_NORMAL); game_serve(&g);
 	g.ball.y = FX(1); g.ball.vy = -FX(2);
-	game_step(&g, 0);
+	int ev = game_step(&g, 0, 0);
+	assert(ev == GEV_WALL_BOUNCE);
 	assert(g.ball.y >= 0 && g.ball.vy > 0);
 	g.ball.y = COURT_D - FX(1); g.ball.vy = FX(2);
-	game_step(&g, 0);
+	ev = game_step(&g, 0, 0);
+	assert(ev == GEV_WALL_BOUNCE);
 	assert(g.ball.y <= COURT_D && g.ball.vy < 0);
 }
 
@@ -48,8 +51,8 @@ static void test_paddle_hit_reflects_and_kicks(void)
 	Game g; game_init(&g, &CFG_NORMAL); game_serve(&g);
 	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
 	g.ball.y = g.pads[0].y; g.ball.vy = 0;
-	int ev = game_step(&g, 0);
-	assert(ev == GEV_NONE);
+	int ev = game_step(&g, 0, 0);
+	assert(ev == GEV_HIT_PLAYER);
 	assert(g.ball.vx < 0);			/* reflected */
 	assert(-g.ball.vx > SERVE_VX);		/* sped up */
 	assert(g.ball.x <= COURT_W);		/* back in court */
@@ -62,8 +65,8 @@ static void test_paddle_hit_has_forgiving_margin(void)
 	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
 	g.ball.y = g.pads[0].y + PAD_HALF + BALL_R + PAD_HIT_MARGIN - FX(1);
 	g.ball.vy = 0;
-	int ev = game_step(&g, 0);
-	assert(ev == GEV_NONE);
+	int ev = game_step(&g, 0, 0);
+	assert(ev == GEV_HIT_PLAYER);
 	assert(g.ball.vx < 0);
 }
 
@@ -73,7 +76,7 @@ static void test_miss_scores_for_other_side(void)
 	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
 	g.ball.y = g.pads[0].y + PAD_HALF + BALL_R + PAD_HIT_MARGIN + FX(2);
 	g.ball.vy = 0;
-	int ev = game_step(&g, 0);
+	int ev = game_step(&g, 0, 0);
 	assert(ev == GEV_POINT);
 	assert(g.score[1] == 1 && g.score[0] == 0);
 	assert(g.server == 1);			/* scorer serves */
@@ -87,7 +90,7 @@ static void test_win_at_five(void)
 	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
 	g.ball.y = g.pads[0].y + PAD_HALF + BALL_R + PAD_HIT_MARGIN + FX(2);
 	g.ball.vy = 0;
-	int ev = game_step(&g, 0);
+	int ev = game_step(&g, 0, 0);
 	assert(ev == GEV_WIN);
 	assert(g.winner == 1 && g.score[1] == g.win_score);
 }
@@ -98,12 +101,23 @@ static void test_player_paddle_moves_and_clamps(void)
 	/* park the ball mid-court so no points happen */
 	g.ball.x = COURT_W / 2; g.ball.vx = 0; g.ball.vy = 0;
 	int y0 = g.pads[0].y;
-	game_step(&g, 1);
+	game_step(&g, 1, 0);
 	assert(g.pads[0].y == y0 + PAD_SPEED);
-	for(int i = 0; i < 200; i++) game_step(&g, 1);
+	for(int i = 0; i < 200; i++) game_step(&g, 1, 0);
 	assert(g.pads[0].y == COURT_D - PAD_HALF);
-	for(int i = 0; i < 200; i++) game_step(&g, -1);
+	for(int i = 0; i < 200; i++) game_step(&g, -1, 0);
 	assert(g.pads[0].y == PAD_HALF);
+}
+
+static void test_player_boost_is_faster(void)
+{
+	Game g; game_init(&g, &CFG_NORMAL); game_serve(&g);
+	g.ball.x = COURT_W / 2; g.ball.vx = 0; g.ball.vy = 0;
+	int y0 = g.pads[0].y;
+	game_step(&g, 1, 1);
+	assert(g.pads[0].y == y0 + PAD_BOOST_SPEED);
+	assert(PAD_BOOST_SPEED == PAD_SPEED * 3 / 2);
+	assert(PAD_BOOST_SPEED > PAD_SPEED);
 }
 
 static void test_ai_tracks_ball(void)
@@ -112,9 +126,9 @@ static void test_ai_tracks_ball(void)
 	g.ball.x = COURT_W / 2; g.ball.vx = 0; g.ball.vy = 0;
 	g.ball.y = FX(70);
 	int y0 = g.pads[1].y;
-	game_step(&g, 0);
+	game_step(&g, 0, 0);
 	assert(g.pads[1].y > y0);		/* moves toward ball */
-	for(int i = 0; i < 500; i++) game_step(&g, 0);
+	for(int i = 0; i < 500; i++) game_step(&g, 0, 0);
 	/* settles near ball y (within dead zone + one step) */
 	int d = g.pads[1].y - g.ball.y;
 	if(d < 0) d = -d;
@@ -126,15 +140,15 @@ static void test_clamped_paddle_gives_no_spin(void)
 	Game g; game_init(&g, &CFG_NORMAL); game_serve(&g);
 	/* pin player paddle at bottom clamp */
 	g.ball.x = COURT_W / 2; g.ball.vx = 0; g.ball.vy = 0;
-	for(int i = 0; i < 200; i++) game_step(&g, 1);
+	for(int i = 0; i < 200; i++) game_step(&g, 1, 0);
 	assert(g.pads[0].y == COURT_D - PAD_HALF);
 	/* paddle pinned: one more push must record zero actual movement */
-	game_step(&g, 1);
+	game_step(&g, 1, 0);
 	assert(g.pads[0].vy == 0);
 	/* ball hits pinned paddle while input held: no spin transfer */
 	g.ball.x = COURT_W - FX(1); g.ball.vx = SERVE_VX;
 	g.ball.y = g.pads[0].y; g.ball.vy = 0;
-	game_step(&g, 1);
+	game_step(&g, 1, 0);
 	assert(g.ball.vy == 0);
 }
 
@@ -171,7 +185,7 @@ static void test_win_score_honored(void)
 		g.ball.x = COURT_W - FX(1); g.ball.vx = MAX_VX;
 		g.ball.y = 0; g.pads[0].y = COURT_D - PAD_HALF;	/* miss */
 		int ev = 0;
-		for(int t = 0; t < 60 && ev == 0; t++) ev = game_step(&g, 0);
+		for(int t = 0; t < 60 && ev == 0; t++) ev = game_step(&g, 0, 0);
 		assert(ev == GEV_WIN && g.winner == 1);
 	}
 }
@@ -196,6 +210,7 @@ int main(void)
 	test_miss_scores_for_other_side();
 	test_win_at_five();
 	test_player_paddle_moves_and_clamps();
+	test_player_boost_is_faster();
 	test_ai_tracks_ball();
 	test_clamped_paddle_gives_no_spin();
 	test_ai_dir();

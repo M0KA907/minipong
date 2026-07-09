@@ -7,7 +7,6 @@ static void test_defaults(void)
 	Menu m; menu_init(&m);
 	assert(m.cfg.difficulty == 1);		/* normal */
 	assert(m.cfg.win_score_idx == 0);	/* 5 */
-	assert(m.cfg.controls == 0);		/* L-R */
 	assert(m.row == MROW_DIFF);
 }
 
@@ -31,9 +30,6 @@ static void test_cycle_values(void)
 	menu_cycle(&m, -1); assert(m.cfg.difficulty == 2);
 	m.row = MROW_SCORE;
 	menu_cycle(&m, 1);  assert(m.cfg.win_score_idx == 1);
-	m.row = MROW_CTRL;
-	menu_cycle(&m, 1);  assert(m.cfg.controls == 1);
-	menu_cycle(&m, 1);  assert(m.cfg.controls == 0);
 }
 
 static void test_cycle_on_start_row_noop(void)
@@ -44,7 +40,6 @@ static void test_cycle_on_start_row_noop(void)
 	menu_cycle(&m, 1);
 	assert(m.cfg.difficulty == before.difficulty);
 	assert(m.cfg.win_score_idx == before.win_score_idx);
-	assert(m.cfg.controls == before.controls);
 }
 
 int main(void)
