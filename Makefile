@@ -96,6 +96,8 @@ test:
 	@$(BUILD)/test_iso
 	gcc -std=c99 -Wall -Wextra -Iinclude tests/test_game.c source/game.c source/iso.c -o $(BUILD)/test_game
 	@$(BUILD)/test_game
+	gcc -std=c99 -Wall -Wextra -Iinclude tests/test_menu.c source/menu.c -o $(BUILD)/test_menu
+	@$(BUILD)/test_menu
 
 #---------------------------------------------------------------------------------
 else
